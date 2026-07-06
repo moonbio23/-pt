@@ -19,6 +19,9 @@
   .header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;}
   button,input,select,textarea{font-family:inherit;} button{cursor:pointer;border:none;}
   .menu-toggle{flex-shrink:0;width:38px;height:38px;background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:10px;font-size:18px;}
+  .logout-btn{flex-shrink:0;height:38px;padding:0 14px;background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:10px;font-size:13px;font-weight:700;}
+  .logout-btn:hover{color:var(--coral);border-color:rgba(239,126,106,.5);}
+  .logout-btn:active{transform:scale(0.97);}
   .menu-toggle:active,.pill-btn:active,.btn-primary:active{transform:scale(0.97);}
   .dropdown-menu{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px;margin-bottom:16px;display:flex;flex-direction:column;gap:2px;}
   .dropdown-item{background:none;color:var(--muted);text-align:left;padding:12px 14px;border-radius:9px;font-size:14px;font-weight:700;}
@@ -93,9 +96,9 @@
     <h1>PT <span>회원 관리</span></h1>
     <div class="subtitle">회원별 로그인 기반 코칭 기록 입력 화면</div>
     <h2>로그인</h2>
-    <div class="cloud-note">회원은 이름으로 발급된 아이디와 초기 비밀번호(휴대폰번호 뒷 4자리)로 로그인합니다. 관리자는 별도로 만든 관리자 계정으로 로그인합니다.</div>
+    <div class="cloud-note">회원은 이름으로 발급된 아이디와 초기 비밀번호(휴대폰번호 뒷 6자리)로 로그인합니다. 관리자는 별도로 만든 관리자 계정으로 로그인합니다.</div>
     <div class="field required"><label>아이디 <span class="req">필수</span></label><input id="login-id" type="text" placeholder="예: 문홍주 또는 admin" autocomplete="username"></div>
-    <div class="field required"><label>비밀번호 <span class="req">필수</span></label><input id="login-password" type="password" placeholder="초기 비밀번호: 휴대폰번호 뒷 4자리" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()"></div>
+    <div class="field required"><label>비밀번호 <span class="req">필수</span></label><input id="login-password" type="password" placeholder="초기 비밀번호: 휴대폰번호 뒷 6자리" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()"></div>
     <button class="btn-primary" onclick="login()">로그인</button>
     <div class="msg" id="auth-msg"></div>
     <div class="auth-help">Supabase 설정값을 넣지 않은 상태에서는 로컬 데모 모드로 실행됩니다. 실제 공유 서비스로 쓰려면 함께 제공된 SQL과 Edge Function을 먼저 배포해야 합니다.</div>
@@ -107,7 +110,7 @@
     <h1>PT <span>회원 관리</span></h1>
     <h2>비밀번호 변경</h2>
     <div class="cloud-note">첫 로그인이거나, 아직 초기 비밀번호를 그대로 쓰고 계세요. 계속 사용하시려면 비밀번호를 한 번 바꿔주세요.</div>
-    <div class="field required"><label>새 비밀번호 <span class="req">필수</span></label><input id="pwchange-new" type="password" placeholder="4자리 이상" autocomplete="new-password"></div>
+    <div class="field required"><label>새 비밀번호 <span class="req">필수</span></label><input id="pwchange-new" type="password" placeholder="6자리 이상" autocomplete="new-password"></div>
     <div class="field required"><label>새 비밀번호 확인 <span class="req">필수</span></label><input id="pwchange-confirm" type="password" placeholder="다시 한 번 입력" autocomplete="new-password" onkeydown="if(event.key==='Enter') changePassword()"></div>
     <button class="btn-primary" onclick="changePassword()">비밀번호 변경하기</button>
     <div class="msg" id="pwchange-msg"></div>
@@ -147,10 +150,10 @@
 
     <div class="form-card">
       <h2>신규 회원 등록</h2>
-      <div class="required-note">필수 입력값은 노란색으로 표시했습니다. 이름, 총 결제 금액, 총 세션을 입력해야 회원 등록이 완료됩니다.</div>
+      <div class="required-note">필수 입력값은 노란색으로 표시했습니다. 이름, 연락처, 총 결제 금액, 총 세션을 입력해야 회원 등록이 완료됩니다.</div>
       <div class="grid2">
         <div class="field required"><label>이름 <span class="req">필수</span></label><input id="in-name" type="text" placeholder="홍길동" required></div>
-        <div class="field"><label>연락처</label><input id="in-phone" type="tel" placeholder="010-0000-0000"></div>
+        <div class="field required"><label>연락처 <span class="req">필수</span></label><input id="in-phone" type="tel" placeholder="010-0000-0000" required></div>
         <div class="field"><label>생년월일</label><input id="in-birth" type="date"></div>
         <div class="field"><label>성별</label><select id="in-gender"><option value="">선택 안 함</option><option>남성</option><option>여성</option><option>기타/미기재</option></select></div>
         <div class="field"><label>직업</label><input id="in-job" type="text" placeholder="사무직, 학생 등"></div>
@@ -632,7 +635,7 @@ async function skipPasswordChangeForNow(){
 async function changePassword(){
   const pw1=document.getElementById('pwchange-new').value;
   const pw2=document.getElementById('pwchange-confirm').value;
-  if(!pw1||pw1.length<4){ showMsg('pwchange-msg','비밀번호는 4자리 이상이어야 합니다.','error'); return; }
+  if(!pw1||pw1.length<6){ showMsg('pwchange-msg','비밀번호는 6자리 이상이어야 합니다.','error'); return; }
   if(pw1!==pw2){ showMsg('pwchange-msg','두 비밀번호가 일치하지 않습니다.','error'); return; }
   const client=initSupabaseClient(); if(!client) return;
   const {error:updateErr}=await client.auth.updateUser({password:pw1});
@@ -699,16 +702,16 @@ async function addMember(){
   const amount = num(document.getElementById('in-amount').value);
   const total = parseInt(document.getElementById('in-total').value,10);
   const missing=[]; if(!name) missing.push('in-name'); if(amount<=0) missing.push('in-amount'); if(!total||total<=0) missing.push('in-total');
-  const last4=(phone.match(/\d/g)||[]).join('').slice(-4);
-  if(cloudReady() && last4.length<4){ missing.push('in-phone'); document.getElementById('in-phone')?.classList.add('invalid'); }
-  if(missing.length){ missing.forEach(id=>document.getElementById(id)?.classList.add('invalid')); showMsg('form-msg', cloudReady()?'이름, 연락처, 총 결제 금액, 총 세션을 확인하세요. 연락처는 초기 비밀번호 생성을 위해 숫자 4자리 이상이 필요합니다.':'노란색 필수 항목을 확인해 주세요.','error'); document.getElementById(missing[0])?.focus(); return; }
+  const last6=(phone.match(/\d/g)||[]).join('').slice(-6);
+  if(last6.length<6){ missing.push('in-phone'); document.getElementById('in-phone')?.classList.add('invalid'); }
+  if(missing.length){ missing.forEach(id=>document.getElementById(id)?.classList.add('invalid')); showMsg('form-msg', '이름, 연락처, 총 결제 금액, 총 세션을 확인하세요. 연락처는 초기 비밀번호 생성을 위해 숫자 6자리 이상이 필요합니다.','error'); document.getElementById(missing[0])?.focus(); return; }
   const feeInput=document.getElementById('in-fee').value;
   const member=normalizeMember({id:makeId(), createdAt:today(), name, phone, birth:document.getElementById('in-birth').value, gender:document.getElementById('in-gender').value, job:document.getElementById('in-job').value.trim(), status:document.getElementById('in-status').value, goal:document.getElementById('in-goal').value, referrer:document.getElementById('in-referrer').value.trim(), startDate:document.getElementById('in-start').value||today(), pain:document.getElementById('in-pain').value.trim(), contraindication:document.getElementById('in-contra').value.trim(), medication:document.getElementById('in-medication').value.trim(), allergy:document.getElementById('in-allergy').value.trim(), notes:document.getElementById('in-notes').value.trim(), totalAmount:amount,totalSessions:total,usedSessions:0,monthlyUsed:0,sessionFee:feeInput?num(feeInput):Math.round(amount/total), inbody:[],workouts:[],meals:[],homework:[],habits:[]});
   if(!cloudReady()){
     members.push(member); clearMemberForm(); showMsg('form-msg',`${name} 회원을 등록했습니다.`, 'info'); await save(); return;
   }
   if(currentUserRole!=='admin'){ showMsg('form-msg','회원 등록은 관리자만 가능합니다.','error'); return; }
-  const {data,error}=await sb.functions.invoke('create-member',{body:{member, login_id:name, temp_password:last4}});
+  const {data,error}=await sb.functions.invoke('create-member',{body:{member, login_id:name, temp_password:last6}});
   if(error){ showMsg('form-msg',`회원 계정 생성 실패: ${error.message}`,'error'); return; }
   clearMemberForm();
   await loadCloudState();
