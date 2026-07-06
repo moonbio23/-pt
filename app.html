@@ -103,12 +103,11 @@
     <h1>PT <span>회원 관리</span></h1>
     <div class="subtitle">회원별 로그인 기반 코칭 기록 입력 화면</div>
     <h2>로그인</h2>
-    <div class="cloud-note">회원은 이름으로 발급된 아이디와 초기 비밀번호(휴대폰번호 뒷 6자리)로 로그인합니다. 관리자는 별도로 만든 관리자 계정으로 로그인합니다.</div>
-    <div class="field required"><label>아이디 <span class="req">필수</span></label><input id="login-id" type="text" placeholder="예: 문홍주 또는 admin" autocomplete="username"></div>
+    <div class="cloud-note">회원은 이름으로 발급된 아이디와 초기 비밀번호(휴대폰번호 뒷 6자리)로 로그인합니다.<br>관리자는 별도로 만든 관리자 계정으로 로그인합니다.</div>
+    <div class="field required"><label>아이디 <span class="req">필수</span></label><input id="login-id" type="text" placeholder="회원 이름" autocomplete="username"></div>
     <div class="field required"><label>비밀번호 <span class="req">필수</span></label><input id="login-password" type="password" placeholder="초기 비밀번호: 휴대폰번호 뒷 6자리" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()"></div>
     <button class="btn-primary" onclick="login()">로그인</button>
     <div class="msg" id="auth-msg"></div>
-    <div class="auth-help">Supabase 설정값을 넣지 않은 상태에서는 로컬 데모 모드로 실행됩니다. 실제 공유 서비스로 쓰려면 함께 제공된 SQL과 Edge Function을 먼저 배포해야 합니다.</div>
   </div>
 </div>
 
