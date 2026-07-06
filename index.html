@@ -85,23 +85,6 @@
   .file-input{padding:10px;background:var(--surface);}
   .upload-progress{height:6px;background:var(--surface2);border-radius:999px;overflow:hidden;margin-top:10px;display:none;}
   .upload-progress span{display:block;height:100%;width:0%;background:var(--mint);}
-
-  .toast-wrap{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1000;width:min(92vw,520px);display:flex;flex-direction:column;gap:8px;pointer-events:none;}
-  .toast{background:#233a34;color:var(--mint);border:1px solid rgba(94,234,212,.45);border-radius:12px;padding:12px 14px;font-size:14px;font-weight:800;box-shadow:0 12px 30px rgba(0,0,0,.35);line-height:1.45;}
-  .toast.error{background:#3a2320;color:var(--coral);border-color:rgba(239,126,106,.45);}
-  .member-hero{background:linear-gradient(135deg,rgba(94,234,212,.14),rgba(125,211,252,.06));border:1px solid rgba(94,234,212,.38);border-radius:var(--radius);padding:18px;margin-bottom:12px;}
-  .member-hero-title{font-size:20px;font-weight:900;letter-spacing:-0.03em;line-height:1.35;margin-bottom:6px;}
-  .member-hero-title b{color:var(--mint);}
-  .member-hero-sub{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:14px;}
-  .member-progress-large{height:14px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.08);}
-  .member-progress-large span{display:block;height:100%;background:var(--mint);border-radius:999px;transition:width .25s ease;}
-  .member-progress-meta{display:flex;justify-content:space-between;gap:8px;margin-top:8px;color:var(--muted);font-size:12px;font-weight:750;}
-  .member-settings{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;}
-  .password-panel{display:none;margin-top:10px;}
-  .password-panel.open{display:block;}
-  .youtube-frame{width:100%;aspect-ratio:16/9;background:#000;border:0;border-radius:12px;margin-top:10px;}
-  .video-link-badge{display:inline-block;background:rgba(94,234,212,.1);color:var(--mint);border:1px solid rgba(94,234,212,.3);border-radius:999px;padding:2px 8px;font-size:11px;font-weight:850;margin-right:6px;}
-
 </style>
 </head>
 <body>
@@ -116,6 +99,19 @@
     <button class="btn-primary" onclick="login()">로그인</button>
     <div class="msg" id="auth-msg"></div>
     <div class="auth-help">Supabase 설정값을 넣지 않은 상태에서는 로컬 데모 모드로 실행됩니다. 실제 공유 서비스로 쓰려면 함께 제공된 SQL과 Edge Function을 먼저 배포해야 합니다.</div>
+  </div>
+</div>
+
+<div class="wrap" id="pwchange-view" style="display:none;">
+  <div class="form-card auth-card">
+    <h1>PT <span>회원 관리</span></h1>
+    <h2>비밀번호 변경</h2>
+    <div class="cloud-note">첫 로그인이거나, 아직 초기 비밀번호를 그대로 쓰고 계세요. 계속 사용하시려면 비밀번호를 한 번 바꿔주세요.</div>
+    <div class="field required"><label>새 비밀번호 <span class="req">필수</span></label><input id="pwchange-new" type="password" placeholder="4자리 이상" autocomplete="new-password"></div>
+    <div class="field required"><label>새 비밀번호 확인 <span class="req">필수</span></label><input id="pwchange-confirm" type="password" placeholder="다시 한 번 입력" autocomplete="new-password" onkeydown="if(event.key==='Enter') changePassword()"></div>
+    <button class="btn-primary" onclick="changePassword()">비밀번호 변경하기</button>
+    <div class="msg" id="pwchange-msg"></div>
+    <button class="pill-btn" style="width:100%;margin-top:10px;" onclick="skipPasswordChangeForNow()">나중에 변경할게요</button>
   </div>
 </div>
 
@@ -207,14 +203,14 @@
   <div id="view-schedule" style="display:none;"><div id="schedule-content"></div></div>
   <div id="view-videos" style="display:none;"><div id="video-content"></div></div>
 </div>
-<div class="toast-wrap" id="toast-wrap" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 
 // ===== Supabase 설정 =====
 // GitHub Pages에 올리기 전에 아래 두 값을 본인 Supabase 프로젝트 값으로 바꾸세요.
-const SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://tyojxztpoaroiefzklkz.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5b2p4enRwb2Fyb2llZnprbGt6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMzAxNjYsImV4cCI6MjA5ODkwNjE2Nn0.K75txVo3NHLt5iywhUmzdi2yzbdmG3rqWIgo6QzJ-2E
+';
 let sb = null;
 let currentUser = null;
 let currentUserProfile = null;
@@ -247,7 +243,6 @@ let selectedSlot = null;
 let scheduleWeekOffset = 0;
 let pendingImportState = null;
 let storageOK = true;
-let passwordPanelOpen = false;
 const HOURS = [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
 const DAY_LABELS = ['월','화','수','목','금','토','일'];
 const STATUS_LABELS = {scheduled:'예약',confirmed:'확정',done:'출석',noShow:'노쇼',cancelled:'취소',postponed:'연기',makeup:'보강'};
@@ -329,68 +324,12 @@ function load(){
   }catch(e){storageOK=false; members=[]; schedules={};}
   render();
 }
-function save(){
-  try{localStorage.setItem(KEY, serializeState()); storageOK=true;}catch(e){storageOK=false;}
-  render();
-}
 
 function switchView(view){currentView=view; menuOpen=false; render();}
 function toggleMenu(){menuOpen=!menuOpen; render();}
 function goToAddMember(){currentView='members'; menuOpen=false; render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById('in-name')?.focus(),50);}
-function showMsg(id,text,type='info'){
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.textContent=text;
-  el.className='msg show '+type;
-}
-function showToast(text,type='info'){
-  let wrap=document.getElementById('toast-wrap');
-  if(!wrap){
-    wrap=document.createElement('div');
-    wrap.id='toast-wrap';
-    wrap.className='toast-wrap';
-    wrap.setAttribute('aria-live','polite');
-    document.body.appendChild(wrap);
-  }
-  const toast=document.createElement('div');
-  toast.className='toast '+(type==='error'?'error':'info');
-  toast.textContent=text;
-  wrap.appendChild(toast);
-  setTimeout(()=>{toast.style.opacity='0'; toast.style.transform='translateY(6px)';},2600);
-  setTimeout(()=>toast.remove(),3200);
-}
+function showMsg(id,text,type){const el=document.getElementById(id); if(!el)return; el.textContent=text; el.className='msg show '+type;}
 
-function addMember(){
-  const requiredIds = ['in-name','in-amount','in-total'];
-  requiredIds.forEach(id => document.getElementById(id)?.classList.remove('invalid'));
-  const name = document.getElementById('in-name').value.trim();
-  const amount = num(document.getElementById('in-amount').value);
-  const total = parseInt(document.getElementById('in-total').value,10);
-  const missing = [];
-  if(!name) missing.push('in-name');
-  if(amount<=0) missing.push('in-amount');
-  if(!total || total<=0) missing.push('in-total');
-  if(missing.length){
-    missing.forEach(id => document.getElementById(id)?.classList.add('invalid'));
-    showMsg('form-msg','노란색 필수 항목을 확인해 주세요. 이름, 총 결제 금액, 총 세션은 반드시 입력해야 합니다.','error');
-    document.getElementById(missing[0])?.focus();
-    return;
-  }
-  const feeInput = document.getElementById('in-fee').value;
-  members.push(normalizeMember({
-    id: makeId(), createdAt: today(), name,
-    phone: document.getElementById('in-phone').value.trim(), birth: document.getElementById('in-birth').value,
-    gender: document.getElementById('in-gender').value, job: document.getElementById('in-job').value.trim(), status: document.getElementById('in-status').value,
-    goal: document.getElementById('in-goal').value, referrer: document.getElementById('in-referrer').value.trim(), startDate: document.getElementById('in-start').value || today(),
-    pain: document.getElementById('in-pain').value.trim(), contraindication: document.getElementById('in-contra').value.trim(),
-    medication: document.getElementById('in-medication').value.trim(), allergy: document.getElementById('in-allergy').value.trim(), notes: document.getElementById('in-notes').value.trim(),
-    totalAmount: amount, totalSessions: total, usedSessions: 0, monthlyUsed: 0, sessionFee: feeInput ? num(feeInput) : Math.round(amount/total),
-    inbody:[], workouts:[], meals:[], homework:[], habits:[]
-  }));
-  ['in-name','in-phone','in-birth','in-job','in-referrer','in-amount','in-total','in-fee','in-start','in-pain','in-contra','in-medication','in-allergy','in-notes'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
-  showMsg('form-msg',`${name} 회원을 등록했습니다.`, 'info');
-  save();
-}
 
 function exportData(){
   const blob = new Blob([JSON.stringify({version:2,members,schedules}, null, 2)], {type:'application/json'});
@@ -408,27 +347,12 @@ function confirmResetAll(){members=[]; schedules={}; confirmingResetAll=false; s
 
 function askAttend(id){pendingAttendId=id; render();}
 function cancelAttend(){pendingAttendId=null; render();}
-function attend(id){const m=findMember(id); if(m && remaining(m)>0){m.usedSessions++; m.monthlyUsed++;} pendingAttendId=null; save();}
-function undoAttend(id){const m=findMember(id); if(m && m.usedSessions>0){m.usedSessions--; if(m.monthlyUsed>0)m.monthlyUsed--;} save();}
-function resetMonthly(id){const m=findMember(id); if(m){m.monthlyUsed=0; save();}}
 function toggleExpand(id){expandedId=expandedId===id?null:id; confirmingDeleteId=null; render();}
 function toggleCoachingExpand(id){expandedIdCoaching=expandedIdCoaching===id?null:id; render();}
 function askRemove(id){confirmingDeleteId=id; render();}
 function cancelRemove(){confirmingDeleteId=null; render();}
-function setMemberStatus(id,status){const m=findMember(id); if(m && MEMBER_STATUSES.includes(status)){m.status=status; save();}}
-function removeMember(id){members=members.filter(m=>m.id!==id); Object.values(schedules).forEach(week=>{Object.keys(week).forEach(k=>{if(week[k].memberId===id) delete week[k];});}); confirmingDeleteId=null; expandedId=null; expandedIdCoaching=null; save();}
 function setMemberTab(id,tab){memberSubTab[id]=tab; render();}
-function deleteRecord(memberId,listName,recordId){const m=findMember(memberId); if(!m || !Array.isArray(m[listName])) return; const idx=m[listName].findIndex(r=>r.id===recordId); if(idx<0)return; lastDeleted={memberId,listName,index:idx,record:m[listName][idx]}; m[listName].splice(idx,1); save();}
-function undoDelete(){if(!lastDeleted) return; const m=findMember(lastDeleted.memberId); if(m && Array.isArray(m[lastDeleted.listName])){m[lastDeleted.listName].splice(lastDeleted.index,0,lastDeleted.record);} lastDeleted=null; save();}
 
-function addInbody(id){
-  const m=findMember(id); if(!m)return;
-  const entry={id:makeId(), date:document.getElementById(`inbody-date-${id}`).value||today(),
-    weight:valOrNull(`inbody-weight-${id}`), muscle:valOrNull(`inbody-muscle-${id}`), fat:valOrNull(`inbody-fat-${id}`), fatPercent:valOrNull(`inbody-fatpercent-${id}`), score:valOrNull(`inbody-score-${id}`),
-    waist:valOrNull(`inbody-waist-${id}`), hip:valOrNull(`inbody-hip-${id}`), thigh:valOrNull(`inbody-thigh-${id}`), arm:valOrNull(`inbody-arm-${id}`), bloodPressure:document.getElementById(`inbody-bp-${id}`).value.trim(), restingHr:valOrNull(`inbody-hr-${id}`), painScore:valOrNull(`inbody-pain-${id}`), memo:document.getElementById(`inbody-memo-${id}`).value.trim()};
-  const has = Object.entries(entry).some(([k,v])=>!['id','date'].includes(k) && v!==null && v!=='');
-  if(!has) return; m.inbody.push(entry); save();
-}
 function valOrNull(id){const v=document.getElementById(id)?.value; if(v===''||v===undefined) return null; const n=parseFloat(v); return Number.isFinite(n)?n:null;}
 
 function addWorkoutExerciseRow(id, preset={} ){ 
@@ -476,49 +400,7 @@ function getWorkoutExercises(id){
     return {part:get('part'), exercise:get('exercise'), sets:get('sets'), reps:get('reps'), weight:get('weight'), rpe:get('rpe')};
   }).filter(x=>x.part || x.exercise || x.sets || x.reps || x.weight || x.rpe);
 }
-function addWorkout(id){
-  const m=findMember(id); if(!m)return;
-  const exercises=getWorkoutExercises(id).filter(x=>x.exercise);
-  if(exercises.length===0){
-    const first=document.querySelector(`#workout-exercises-${id} [data-field="exercise"]`);
-    if(first){first.classList.add('invalid'); first.focus(); setTimeout(()=>first.classList.remove('invalid'),1600);}
-    return;
-  }
-  const entry={
-    id:makeId(),
-    date:document.getElementById(`workout-date-${id}`).value||today(),
-    exercises,
-    memberFeedback:document.getElementById(`workout-feedback-${id}`).value.trim(),
-    trainerMemo:document.getElementById(`workout-memo-${id}`).value.trim(),
-    nextGoal:document.getElementById(`workout-next-${id}`).value.trim()
-  };
-  m.workouts.push(entry);
-  if(document.getElementById(`workout-count-${id}`).value==='yes' && remaining(m)>0){m.usedSessions++; m.monthlyUsed++;}
-  save();
-}
 
-async function addMeal(id){
-  const content=document.getElementById(`meal-content-${id}`)?.value.trim();
-  if(!content) return;
-  const entry={id:makeId(), date:document.getElementById(`meal-date-${id}`)?.value||today(), type:document.getElementById(`meal-type-${id}`)?.value||'식단', content, protein:valOrNull(`meal-protein-${id}`), carb:valOrNull(`meal-carb-${id}`), fat:valOrNull(`meal-fat-${id}`), kcal:valOrNull(`meal-kcal-${id}`), status:document.getElementById(`meal-status-${id}`)?.value||'회원 입력', feedback:document.getElementById(`meal-feedback-${id}`)?.value.trim()||''};
-  const ok=await persistRecord(id,'meals',entry);
-  if(ok) showToast('식단이 성공적으로 업로드되었습니다!','info');
-}
-async function addHomework(id){
-  const content=document.getElementById(`home-content-${id}`)?.value.trim();
-  if(!content) return;
-  const entry={id:makeId(), date:document.getElementById(`home-date-${id}`)?.value||today(), due:document.getElementById(`home-due-${id}`)?.value||'', category:document.getElementById(`home-category-${id}`)?.value||'개인 운동', content, done:false, memberLog:document.getElementById(`home-log-${id}`)?.value.trim()||'', feedback:document.getElementById(`home-feedback-${id}`)?.value.trim()||''};
-  const ok=await persistRecord(id,'homework',entry);
-  if(ok) showToast('개인운동 기록이 완료되었습니다.','info');
-}
-function toggleHomeworkDone(memberId,recordId){const m=findMember(memberId); const r=m?.homework.find(x=>x.id===recordId); if(r){r.done=!r.done; save();}}
-async function addHabit(id){
-  const entry={id:makeId(), date:document.getElementById(`habit-date-${id}`)?.value||today(), sleep:valOrNull(`habit-sleep-${id}`), water:valOrNull(`habit-water-${id}`), steps:valOrNull(`habit-steps-${id}`), condition:document.getElementById(`habit-condition-${id}`)?.value||'', stress:document.getElementById(`habit-stress-${id}`)?.value||'', memo:document.getElementById(`habit-memo-${id}`)?.value.trim()||''};
-  const has=entry.sleep!==null||entry.water!==null||entry.steps!==null||entry.condition||entry.stress||entry.memo;
-  if(!has) return;
-  const ok=await persistRecord(id,'habits',entry);
-  if(ok) showToast('생활습관 기록이 완료되었습니다.','info');
-}
 
 function buildInfoTab(m){
   const r=remaining(m); const p=percentUsed(m).toFixed(1); const age=ageFromBirth(m.birth);
@@ -553,14 +435,6 @@ function buildMoneyDetailHTML(m){
     <button class="pill-btn" onclick="resetMonthly('${m.id}')">월 소진 초기화</button>
     ${confirmingDeleteId===m.id ? `<span class="danger-text">정말 삭제할까요?</span><button class="pill-btn danger" onclick="removeMember('${m.id}')">삭제 확정</button><button class="pill-btn" onclick="cancelRemove()">취소</button>` : `<button class="pill-btn danger" onclick="askRemove('${m.id}')">회원 삭제</button>`}
   </div>`;
-}
-function buildCoachingDetailHTML(m){
-  const tab=memberSubTab[m.id]||'info'; const tabs=[['info','회원정보'],['inbody','인바디'],['workout','수업일지'],['meal','식단'],['homework','개인운동'],['habit','생활습관']];
-  const nav=`<div class="subtab-nav">${tabs.map(([k,l])=>`<button class="subtab-btn ${tab===k?'active':''}" onclick="setMemberTab('${m.id}','${k}')">${l}</button>`).join('')}</div>`;
-  const undo=lastDeleted&&lastDeleted.memberId===m.id?`<div class="record-item" style="display:flex;justify-content:space-between;align-items:center"><span>기록이 삭제되었습니다.</span><button class="pill-btn mint" onclick="undoDelete()">되돌리기</button></div>`:'';
-  let body='';
-  if(tab==='info') body=buildInfoTab(m); if(tab==='inbody') body=buildInbodyTab(m); if(tab==='workout') body=buildWorkoutTab(m); if(tab==='meal') body=buildMealTab(m); if(tab==='homework') body=buildHomeworkTab(m); if(tab==='habit') body=buildHabitTab(m);
-  return nav+undo+body;
 }
 
 function deltaSpan(curr,prev,unit,lowerIsBetter){if(curr==null||prev==null)return ''; const diff=+(curr-prev).toFixed(1); if(diff===0)return `<span class="delta-flat"> 변화 없음</span>`; const good=lowerIsBetter?diff<0:diff>0; return `<span class="${good?'delta-down':'delta-up'}"> ${diff>0?'▲':'▼'}${Math.abs(diff)}${unit}</span>`;}
@@ -672,25 +546,11 @@ function filteredCoachingMembers(){
   return members.filter(m=>{if(q && !memberMatchesSearch(m,q)) return false; if(f==='active' && m.status!=='진행중') return false; if(f==='holding' && m.status!=='홀딩') return false; if(f==='reReg' && !reRegCandidate(m)) return false; if(f==='today' && !todayIds.has(m.id)) return false; if(f==='noShow' && !noIds.has(m.id)) return false; if(f==='pain' && !(m.goal==='통증관리'||m.pain)) return false; return true;});
 }
 
-function buildMemberCard(m, mode){
-  const r=remaining(m), p=percentUsed(m).toFixed(1);
-  const isFinance=mode==='finance'||mode==='money';
-  const isCoaching=mode==='coaching';
-  const isOpen=isFinance||mode==='profile'?expandedId===m.id:expandedIdCoaching===m.id;
-  const body=isFinance?buildMoneyDetailHTML(m):(isCoaching?buildCoachingDetailHTML(m):buildInfoTab(m));
-  const onToggle=isFinance||mode==='profile'?`toggleExpand('${m.id}')`:`toggleCoachingExpand('${m.id}')`;
-  const pending=pendingAttendId===m.id;
-  if(currentUserRole==='member' && isCoaching){
-    return `<div class="member">${buildMemberSessionHero(m)}${buildPasswordPanel()}<div class="member-main"><div class="member-info" onclick="${onToggle}"><div class="member-name">코칭 기록 입력</div><div class="member-sub">식단 · 개인운동 · 생활습관을 기록할 수 있습니다.</div></div><button class="expand-btn" onclick="${onToggle}">${isOpen?'▲':'▼'}</button></div><div class="member-detail ${isOpen?'open':''}">${isOpen?body:''}</div></div>`;
-  }
-  return `<div class="member"><div class="member-main"><button class="check-btn ${r<=0?'done':''}" ${r<=0?'disabled':''} onclick="askAttend('${m.id}')">✓</button>${pending?`<div class="member-info"><div class="member-name">${esc(m.name)} 출석 처리할까요?</div><div class="action-row" style="margin-top:8px"><button class="pill-btn mint" onclick="attend('${m.id}')">확인</button><button class="pill-btn" onclick="cancelAttend()">취소</button></div></div>`:`<div class="member-info" onclick="${onToggle}"><div class="member-name">${esc(m.name)}</div><div class="member-sub"><span class="status-pill ${statusClass(m.status)}">${esc(m.status)}</span>${esc(m.goal||'목표 미입력')} · 남은 <b>${r}</b>회 · 이번 달 <b>${m.monthlyUsed}</b>회 · ${p}%</div><div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div></div>`}<button class="expand-btn" onclick="${onToggle}">${isOpen?'▲':'▼'}</button></div><div class="member-detail ${isOpen?'open':''}">${isOpen?body:''}</div></div>`;
-}
 
 function renderMembers(){
   const container=document.getElementById('members'); if(!container)return; const q=document.getElementById('search-input')?.value.trim().toLowerCase()||''; const sf=document.getElementById('member-status-filter')?.value||'all'; const list=members.filter(m=>(!q||memberMatchesSearch(m,q)) && (sf==='all'||m.status===sf));
   container.innerHTML=list.map(m=>buildMemberCard(m,'profile')).join(''); const empty=document.getElementById('empty'); empty.style.display=list.length?'none':'block'; empty.textContent=members.length?'검색 결과가 없습니다.':'등록된 회원이 없습니다.';
 }
-function renderCoaching(){const el=document.getElementById('coaching-list'); if(!el)return; const list=filteredCoachingMembers(); el.innerHTML=list.length?`<div class="members">${list.map(m=>buildMemberCard(m,'coaching')).join('')}</div>`:`<div class="empty">조건에 맞는 회원이 없습니다.</div>`;}
 
 function getMonday(dateStr){const d=new Date(dateStr+'T00:00:00'); const day=d.getDay(); d.setDate(d.getDate()+(day===0?-6:1-day)); return d.toISOString().slice(0,10);}
 function addDaysStr(dateStr,n){const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10);}
@@ -700,18 +560,10 @@ function ensureWeek(key){if(!schedules[key]) schedules[key]={}; return schedules
 function selectSlot(date,hour){selectedSlot=(selectedSlot&&selectedSlot.date===date&&selectedSlot.hour===hour)?null:{date,hour}; render();}
 function changeWeek(delta){scheduleWeekOffset+=delta; selectedSlot=null; render();}
 function goToThisWeek(){scheduleWeekOffset=0; selectedSlot=null; render();}
-function assignSlot(weekKey,date,hour){const memberId=document.getElementById('slot-member-select')?.value; if(!memberId)return; const status=document.getElementById('slot-status-select')?.value||'scheduled'; const memo=document.getElementById('slot-memo')?.value.trim()||''; ensureWeek(weekKey)[`${date}_${hour}`]={memberId,status,memo,sessionCounted:false}; selectedSlot=null; save();}
-function updateSlotStatus(weekKey,date,hour,status,countSession=false){const slot=ensureWeek(weekKey)[`${date}_${hour}`]; if(!slot)return; const m=findMember(slot.memberId); if(slot.sessionCounted && status!=='done'){if(m&&m.usedSessions>0){m.usedSessions--; if(m.monthlyUsed>0)m.monthlyUsed--;} slot.sessionCounted=false;} if(countSession && !slot.sessionCounted){if(m&&remaining(m)>0){m.usedSessions++; m.monthlyUsed++; slot.sessionCounted=true;}} slot.status=status; save();}
-function removeSlot(weekKey,date,hour){const week=ensureWeek(weekKey); const slot=week[`${date}_${hour}`]; if(slot?.sessionCounted){const m=findMember(slot.memberId); if(m&&m.usedSessions>0){m.usedSessions--; if(m.monthlyUsed>0)m.monthlyUsed--;}} delete week[`${date}_${hour}`]; selectedSlot=null; save();}
 function buildSlotPanel(weekKey){
   if(!selectedSlot)return ''; const {date,hour}=selectedSlot; const key=`${date}_${hour}`; const slot=(schedules[weekKey]||{})[key]; const title=`${fmtDate(date)} ${hour}시`;
   if(!slot){const options=members.map(m=>`<option value="${m.id}">${esc(m.name)} · ${esc(m.status)}</option>`).join(''); return `<div class="record-form" style="margin-top:14px"><div style="font-weight:850;margin-bottom:8px">${title}</div>${members.length?`<label>회원</label><select id="slot-member-select"><option value="">회원 선택</option>${options}</select><label>예약 상태</label><select id="slot-status-select"><option value="scheduled">예약</option><option value="confirmed">확정</option><option value="makeup">보강</option></select><label>메모</label><textarea id="slot-memo" placeholder="수업 목적, 변동 사유 등"></textarea><div class="action-row"><button class="pill-btn mint" onclick="assignSlot('${weekKey}','${date}',${hour})">배정</button><button class="pill-btn" onclick="selectedSlot=null;render()">닫기</button></div>`:`<div class="empty-sub">먼저 회원을 등록하세요.</div>`}</div>`;}
   const m=findMember(slot.memberId); return `<div class="record-form" style="margin-top:14px"><div style="font-weight:850;margin-bottom:4px">${title}</div><div style="font-size:15px;margin-bottom:4px">${esc(m?.name||'삭제된 회원')}</div><div class="member-sub">상태: ${STATUS_LABELS[slot.status]||slot.status}${slot.sessionCounted?' · 세션 차감됨':''}</div>${slot.memo?`<div class="record-text" style="margin:8px 0">${esc(slot.memo)}</div>`:''}<div class="action-row" style="margin-top:10px"><button class="pill-btn mint" onclick="updateSlotStatus('${weekKey}','${date}',${hour},'done',true)">출석 완료+차감</button><button class="pill-btn" onclick="updateSlotStatus('${weekKey}','${date}',${hour},'confirmed')">확정</button><button class="pill-btn amber" onclick="updateSlotStatus('${weekKey}','${date}',${hour},'noShow')">노쇼</button><button class="pill-btn amber" onclick="updateSlotStatus('${weekKey}','${date}',${hour},'postponed')">연기</button><button class="pill-btn danger" onclick="updateSlotStatus('${weekKey}','${date}',${hour},'cancelled')">취소</button><button class="pill-btn danger" onclick="removeSlot('${weekKey}','${date}',${hour})">삭제</button></div></div>`;
-}
-function renderSchedule(){
-  const el=document.getElementById('schedule-content'); if(!el)return; const weekStart=getWeekStartByOffset(scheduleWeekOffset), dates=getWeekDates(weekStart), data=schedules[weekStart]||{}; let table=`<div class="sched-scroll"><table class="sched-table"><thead><tr><th class="sched-corner"></th>`; DAY_LABELS.forEach((d,i)=>table+=`<th>${d}<br><span class="sched-date">${fmtDateShort(dates[i])}</span></th>`); table+='</tr></thead><tbody>';
-  HOURS.forEach(h=>{table+=`<tr><th class="sched-hourlabel">${h}시</th>`; dates.forEach(date=>{const slot=data[`${date}_${h}`]; const sel=selectedSlot&&selectedSlot.date===date&&selectedSlot.hour===h; let cls='sched-cell'+(sel?' sched-selected':'')+(slot?` slot-${slot.status}`:''); const name=slot?esc(findMember(slot.memberId)?.name||'?'):''; table+=`<td class="${cls}" onclick="selectSlot('${date}',${h})">${name?`<span class="sched-name">${name}</span>`:''}</td>`;}); table+='</tr>';}); table+='</tbody></table></div>';
-  el.innerHTML=`<div class="sched-nav"><button class="pill-btn" onclick="changeWeek(-1)">이전 주</button><div class="sched-range">${fmtDateShort(dates[0])} ~ ${fmtDateShort(dates[6])}${scheduleWeekOffset===0?' · 이번 주':''}</div><button class="pill-btn" onclick="changeWeek(1)">다음 주</button></div>${scheduleWeekOffset!==0?`<button class="pill-btn" style="margin-bottom:14px" onclick="goToThisWeek()">이번 주로 이동</button>`:''}<div class="sched-legend">${Object.entries(STATUS_LABELS).map(([k,v])=>`<span><i class="dot slot-${k}"></i>${v}</span>`).join('')}</div>${table}${buildSlotPanel(weekStart)}`;
 }
 
 function currentMonthSlots(){const mk=monthKey(); const slots=[]; Object.values(schedules).forEach(week=>Object.entries(week).forEach(([key,slot])=>{if(key.slice(0,7)===mk) slots.push(slot);})); return slots;}
@@ -754,33 +606,6 @@ function renderFinance(){
   <div class="members">${rows.map(m=>buildMemberCard(m,'finance')).join('')}</div>
   <div class="stat-block" style="margin-top:16px">${confirmingResetAll?`<div class="danger-text" style="margin-bottom:8px">전체 월 소진 수를 0으로 초기화할까요?</div><div class="action-row"><button class="pill-btn danger" onclick="members.forEach(m=>m.monthlyUsed=0);confirmingResetAll=false;save();">초기화 확정</button><button class="pill-btn" onclick="confirmingResetAll=false;render();">취소</button></div>`:`<button class="pill-btn" onclick="confirmingResetAll=true;render();">전체 회원 월 소진 초기화</button>`}</div>`;
 }
-function renderSummary(){
-  const summary=document.getElementById('summary');
-  const remTotal=members.reduce((s,m)=>s+remaining(m),0);
-  const reRegs=members.filter(reRegCandidate).length;
-  const mkSlots=currentMonthSlots();
-  const done=mkSlots.filter(s=>s.status==='done').length;
-  const noShows=mkSlots.filter(s=>s.status==='noShow').length;
-  if(currentView==='finance'){
-    const totalRevenue=members.reduce((s,m)=>s+num(m.totalAmount),0);
-    const monthlyIncome=members.reduce((s,m)=>s+num(m.monthlyUsed)*num(m.sessionFee),0);
-    summary.innerHTML=`<div class="chip"><span class="n">${fmt(totalRevenue)}원</span><span class="l">누적 결제</span></div><div class="chip"><span class="n">${fmt(monthlyIncome)}원</span><span class="l">이번 달 수입</span></div><div class="chip"><span class="n">${remTotal}회</span><span class="l">남은 세션</span></div><div class="chip"><span class="n">${reRegs}명</span><span class="l">재등록 대상</span></div>`;
-  }else{
-    const active=members.filter(m=>m.status==='진행중').length;
-    summary.innerHTML=`<div class="chip"><span class="n">${members.length}명</span><span class="l">전체 회원</span></div><div class="chip"><span class="n">${active}명</span><span class="l">진행중</span></div>`;
-  }
-}
-function render(){
-  const allViews=['coaching','members','stats','finance','schedule','videos'];
-  const allowed=currentUserRole==='member'?['coaching','schedule','videos']:allViews;
-  if(!allowed.includes(currentView)) currentView='coaching';
-  const menu=document.getElementById('dropdown-menu'); if(menu) menu.style.display=menuOpen?'flex':'none';
-  allViews.forEach(v=>{const item=document.getElementById('menu-'+v); if(item){item.style.display=allowed.includes(v)?'block':'none'; item.className='dropdown-item'+(currentView===v?' active':'');} const view=document.getElementById('view-'+v); if(view) view.style.display=currentView===v?'block':'none';});
-  const warn=document.getElementById('storage-warn'); if(warn) warn.style.display=storageOK?'none':'block';
-  renderSummary(); if(currentUserRole==='admin') renderMembers(); renderCoaching(); if(currentUserRole==='admin'){renderStats(); renderFinance();} renderSchedule(); renderVideos();
-  const fab=document.querySelector('.fab'); if(fab) fab.style.display=currentUserRole==='admin'?'block':'none';
-  if(confirmingResetAll && currentView==='members'){showMsg('import-msg','전체 초기화는 나의 수익 탭 하단의 확정 버튼에서 처리하세요.','error'); currentView='finance';}
-}
 
 
 // ===== Supabase 연동/권한 분리 오버라이드 =====
@@ -789,9 +614,36 @@ function showAuthMsg(text,type='error'){
 }
 function setAppVisible(appVisible){
   const auth=document.getElementById('auth-view'); const app=document.getElementById('app-view');
+  const pw=document.getElementById('pwchange-view'); if(pw) pw.style.display='none';
   if(auth) auth.style.display=appVisible?'none':'block';
   if(app) app.style.display=appVisible?'block':'none';
   const logoutBtn=document.getElementById('logout-btn'); if(logoutBtn) logoutBtn.style.display=(appVisible&&cloudReady())?'inline-block':'none';
+}
+function showPasswordChangeView(){
+  const auth=document.getElementById('auth-view'); const app=document.getElementById('app-view'); const pw=document.getElementById('pwchange-view');
+  if(auth) auth.style.display='none';
+  if(app) app.style.display='none';
+  if(pw) pw.style.display='block';
+}
+let pwCheckSkipped=false;
+async function skipPasswordChangeForNow(){
+  pwCheckSkipped=true;
+  await loadCloudState();
+}
+async function changePassword(){
+  const pw1=document.getElementById('pwchange-new').value;
+  const pw2=document.getElementById('pwchange-confirm').value;
+  if(!pw1||pw1.length<4){ showMsg('pwchange-msg','비밀번호는 4자리 이상이어야 합니다.','error'); return; }
+  if(pw1!==pw2){ showMsg('pwchange-msg','두 비밀번호가 일치하지 않습니다.','error'); return; }
+  const client=initSupabaseClient(); if(!client) return;
+  const {error:updateErr}=await client.auth.updateUser({password:pw1});
+  if(updateErr){ showMsg('pwchange-msg','비밀번호 변경 실패: '+updateErr.message,'error'); return; }
+  const {error:rpcErr}=await client.rpc('mark_password_changed');
+  if(rpcErr){ showMsg('pwchange-msg','비밀번호는 바뀌었지만 상태 저장에 실패했습니다: '+rpcErr.message,'error'); return; }
+  pwCheckSkipped=false;
+  document.getElementById('pwchange-new').value='';
+  document.getElementById('pwchange-confirm').value='';
+  await loadCloudState();
 }
 function dbRowToMember(row, records=[]){
   const byKind = {inbody:[], workouts:[], meals:[], homework:[], habits:[]};
@@ -830,45 +682,8 @@ async function login(){
 }
 async function logout(){
   if(sb) await sb.auth.signOut();
-  currentUser=null; currentUserProfile=null; members=[]; schedules={}; expandedId=null; expandedIdCoaching=null; selectedSlot=null;
+  currentUser=null; currentUserProfile=null; members=[]; schedules={}; expandedId=null; expandedIdCoaching=null; selectedSlot=null; pwCheckSkipped=false;
   setAppVisible(false);
-}
-async function loadCloudState(){
-  const client=initSupabaseClient();
-  if(!client){ currentUserRole='admin'; memberVideos=[]; setAppVisible(true); load(); return; }
-  const {data:{session}}=await client.auth.getSession();
-  if(!session){ setAppVisible(false); return; }
-  currentUser=session.user;
-  const {data:profile,error:profileErr}=await client.from('profiles').select('*').eq('user_id',session.user.id).single();
-  if(profileErr || !profile){ setAppVisible(false); showAuthMsg('프로필 권한 정보가 없습니다. Supabase profiles 테이블에서 관리자/회원 역할을 확인하세요.','error'); return; }
-  currentUserProfile=profile; currentUserRole=profile.role;
-  if(currentUserRole==='admin'){
-    const [{data:memberRows,error:memErr},{data:recordRows,error:recErr},{data:scheduleRows,error:schErr},{data:videoRows,error:vidErr}] = await Promise.all([
-      client.from('members').select('*').order('name'),
-      client.from('member_records').select('*').order('created_at',{ascending:true}),
-      client.from('schedule_slots').select('*').order('slot_date',{ascending:true}),
-      client.from('member_videos').select('*').order('created_at',{ascending:false})
-    ]);
-    if(memErr||recErr||schErr||vidErr){showAuthMsg('데이터를 불러오지 못했습니다. RLS 정책과 member_videos 테이블을 확인하세요.','error'); return;}
-    members=(memberRows||[]).map(row=>dbRowToMember(row,recordRows||[]));
-    schedules=scheduleRowsToMap(scheduleRows||[]);
-    memberVideos=(videoRows||[]).map(normalizeVideoRow);
-  }else{
-    const [{data:recordRows,error:recErr},{data:scheduleRows,error:schErr},{data:videoRows,error:vidErr},ownSummary] = await Promise.all([
-      client.from('member_records').select('*').order('created_at',{ascending:true}),
-      client.from('schedule_slots').select('*').order('slot_date',{ascending:true}),
-      client.from('member_videos').select('*').order('created_at',{ascending:false}),
-      loadOwnMemberSummary(client, profile)
-    ]);
-    if(recErr||schErr||vidErr){showAuthMsg('내 기록을 불러오지 못했습니다. 권한 정책과 영상 테이블을 확인하세요.','error'); return;}
-    members=[dbRowToMember({...ownSummary, created_at_date:today()}, recordRows||[])];
-    schedules=scheduleRowsToMap(scheduleRows||[]);
-    memberVideos=(videoRows||[]).map(normalizeVideoRow);
-    expandedIdCoaching=profile.member_id;
-  }
-  setAppVisible(true);
-  const badge=document.getElementById('user-badge'); if(badge) badge.textContent=(currentUserRole==='admin'?'관리자':'회원')+' · '+(profile.display_name||profile.login_id||currentUser.email);
-  render();
 }
 async function save(){
   if(!cloudReady()){
@@ -922,19 +737,10 @@ async function removeMember(id){
   confirmingDeleteId=null; expandedId=null; expandedIdCoaching=null; await loadCloudState();
 }
 async function persistRecord(memberId, kind, payload){
-  if(!cloudReady()){
-    const m=findMember(memberId);
-    if(m&&Array.isArray(m[kind])) m[kind].push(payload);
-    await save();
-    return true;
-  }
+  if(!cloudReady()){const m=findMember(memberId); if(m&&Array.isArray(m[kind])) m[kind].push(payload); await save(); return;}
   const {error}=await sb.from('member_records').insert({id:payload.id, member_id:memberId, kind, payload, created_by:currentUser?.id});
-  if(error){
-    alert('기록 저장 실패: '+error.message);
-    return false;
-  }
+  if(error){alert('기록 저장 실패: '+error.message); return;}
   await loadCloudState();
-  return true;
 }
 async function updateRecordPayload(memberId, kind, payload){
   if(!cloudReady()){await save(); return;}
@@ -971,26 +777,19 @@ async function addWorkout(id){
   if(document.getElementById(`workout-count-${id}`).value==='yes' && remaining(m)>0){await updateMemberField(id,{usedSessions:num(m.usedSessions)+1, monthlyUsed:num(m.monthlyUsed)+1});}
 }
 async function addMeal(id){
-  const content=document.getElementById(`meal-content-${id}`)?.value.trim();
-  if(!content) return;
+  const content=document.getElementById(`meal-content-${id}`)?.value.trim(); if(!content)return;
   const entry={id:makeId(), date:document.getElementById(`meal-date-${id}`)?.value||today(), type:document.getElementById(`meal-type-${id}`)?.value||'식단', content, protein:valOrNull(`meal-protein-${id}`), carb:valOrNull(`meal-carb-${id}`), fat:valOrNull(`meal-fat-${id}`), kcal:valOrNull(`meal-kcal-${id}`), status:document.getElementById(`meal-status-${id}`)?.value||'회원 입력', feedback:document.getElementById(`meal-feedback-${id}`)?.value.trim()||''};
-  const ok=await persistRecord(id,'meals',entry);
-  if(ok) showToast('식단이 성공적으로 업로드되었습니다!','info');
+  await persistRecord(id,'meals',entry);
 }
 async function addHomework(id){
-  const content=document.getElementById(`home-content-${id}`)?.value.trim();
-  if(!content) return;
+  const content=document.getElementById(`home-content-${id}`)?.value.trim(); if(!content)return;
   const entry={id:makeId(), date:document.getElementById(`home-date-${id}`)?.value||today(), due:document.getElementById(`home-due-${id}`)?.value||'', category:document.getElementById(`home-category-${id}`)?.value||'개인 운동', content, done:false, memberLog:document.getElementById(`home-log-${id}`)?.value.trim()||'', feedback:document.getElementById(`home-feedback-${id}`)?.value.trim()||''};
-  const ok=await persistRecord(id,'homework',entry);
-  if(ok) showToast('개인운동 기록이 완료되었습니다.','info');
+  await persistRecord(id,'homework',entry);
 }
 async function toggleHomeworkDone(memberId,recordId){const m=findMember(memberId); const r=m?.homework.find(x=>x.id===recordId); if(r){r.done=!r.done; await updateRecordPayload(memberId,'homework',r);}}
 async function addHabit(id){
   const entry={id:makeId(), date:document.getElementById(`habit-date-${id}`)?.value||today(), sleep:valOrNull(`habit-sleep-${id}`), water:valOrNull(`habit-water-${id}`), steps:valOrNull(`habit-steps-${id}`), condition:document.getElementById(`habit-condition-${id}`)?.value||'', stress:document.getElementById(`habit-stress-${id}`)?.value||'', memo:document.getElementById(`habit-memo-${id}`)?.value.trim()||''};
-  const has=entry.sleep!==null||entry.water!==null||entry.steps!==null||entry.condition||entry.stress||entry.memo;
-  if(!has) return;
-  const ok=await persistRecord(id,'habits',entry);
-  if(ok) showToast('생활습관 기록이 완료되었습니다.','info');
+  const has=entry.sleep!==null||entry.water!==null||entry.steps!==null||entry.condition||entry.stress||entry.memo; if(!has)return; await persistRecord(id,'habits',entry);
 }
 function buildMemberMealTab(m){
   const form=`<div class="record-form"><div class="record-form-grid"><div><label>날짜</label><input type="date" id="meal-date-${m.id}" value="${today()}"></div><div><label>식사구분</label><select id="meal-type-${m.id}"><option>아침</option><option>점심</option><option>저녁</option><option>간식</option><option>운동 전후</option></select></div><div><label>단백질 g</label><input type="number" id="meal-protein-${m.id}"></div><div><label>탄수화물 g</label><input type="number" id="meal-carb-${m.id}"></div><div><label>지방 g</label><input type="number" id="meal-fat-${m.id}"></div><div><label>열량 kcal</label><input type="number" id="meal-kcal-${m.id}"></div></div><label>식단 내용</label><textarea id="meal-content-${m.id}" placeholder="먹은 음식, 양, 시간, 사진 설명 등을 적어주세요."></textarea><div style="height:8px"></div><button class="pill-btn mint" style="width:100%" onclick="addMeal('${m.id}')">식단 기록 업로드</button></div>`;
@@ -1016,49 +815,9 @@ function buildCoachingDetailHTML(m){
   let body=''; if(tab==='info') body=buildInfoTab(m); if(tab==='inbody') body=buildInbodyTab(m); if(tab==='workout') body=buildWorkoutTab(m); if(tab==='meal') body=buildMealTab(m); if(tab==='homework') body=buildHomeworkTab(m); if(tab==='habit') body=buildHabitTab(m);
   return nav+undo+body;
 }
-
-function togglePasswordForm(){
-  passwordPanelOpen=!passwordPanelOpen;
-  render();
-}
-function buildPasswordPanel(){
-  return `<div class="member-settings"><div class="action-row" style="justify-content:space-between"><div><div class="video-title">계정 보안</div><div class="hint">초기 비밀번호를 계속 쓰지 않도록 새 비밀번호로 변경할 수 있습니다.</div></div><button class="pill-btn mint" onclick="togglePasswordForm()">비밀번호 변경</button></div><div class="password-panel ${passwordPanelOpen?'open':''}" id="password-panel"><div class="grid2"><div class="field"><label>새 비밀번호</label><input id="new-password" type="password" autocomplete="new-password" placeholder="6자 이상 권장"></div><div class="field"><label>새 비밀번호 확인</label><input id="new-password-confirm" type="password" autocomplete="new-password" placeholder="한 번 더 입력"></div></div><button class="btn-primary" onclick="changePassword()">변경 저장</button><div class="msg" id="password-msg"></div></div></div>`;
-}
-async function changePassword(){
-  if(currentUserRole!=='member') return;
-  if(!sb){showMsg('password-msg','Supabase 로그인 상태에서만 비밀번호를 변경할 수 있습니다.','error'); return;}
-  const pw=document.getElementById('new-password')?.value||'';
-  const confirmPw=document.getElementById('new-password-confirm')?.value||'';
-  if(pw.length<6){showMsg('password-msg','새 비밀번호는 6자 이상으로 입력해 주세요.','error'); return;}
-  if(pw!==confirmPw){showMsg('password-msg','비밀번호 확인이 일치하지 않습니다.','error'); return;}
-  const {error}=await sb.auth.updateUser({password:pw});
-  if(error){showMsg('password-msg','비밀번호 변경 실패: '+error.message,'error'); return;}
-  passwordPanelOpen=false;
-  showToast('비밀번호가 변경되었습니다. 다음 로그인부터 새 비밀번호를 사용하세요.','info');
-  render();
-}
-function buildMemberSessionHero(m){
-  const total=num(m.totalSessions);
-  const used=num(m.usedSessions);
-  const remain=remaining(m);
-  const pct=total>0?Math.min(100,(used/total)*100):0;
-  const pctLabel=total>0?pct.toFixed(1):'0.0';
-  const name=esc(m.name||'회원');
-  const sessionText=total>0?`${name} 회원님, 남은 수업은 <b>${remain}회</b> 입니다.`:`${name} 회원님, 등록된 세션 정보가 아직 표시되지 않습니다.`;
-  const meta=total>0?`사용 ${used}회 / 전체 ${total}회 · 진행률 ${pctLabel}%`:'관리자에게 세션 정보 표시 권한 또는 세션 요약 RPC 설정을 확인해 달라고 요청하세요.';
-  return `<div class="member-hero"><div class="member-hero-title">${sessionText}</div><div class="member-hero-sub">${esc(meta)}</div><div class="member-progress-large"><span style="width:${pct}%"></span></div><div class="member-progress-meta"><span>0회</span><span>${total>0?`${total}회`:''}</span></div></div>`;
-}
 function buildMemberCard(m, mode){
-  const r=remaining(m), p=percentUsed(m).toFixed(1);
-  const isFinance=mode==='finance'||mode==='money';
-  const isCoaching=mode==='coaching';
-  const isOpen=isFinance||mode==='profile'?expandedId===m.id:expandedIdCoaching===m.id;
-  const body=isFinance?buildMoneyDetailHTML(m):(isCoaching?buildCoachingDetailHTML(m):buildInfoTab(m));
-  const onToggle=isFinance||mode==='profile'?`toggleExpand('${m.id}')`:`toggleCoachingExpand('${m.id}')`;
-  const pending=pendingAttendId===m.id;
-  if(currentUserRole==='member' && isCoaching){
-    return `<div class="member">${buildMemberSessionHero(m)}${buildPasswordPanel()}<div class="member-main"><div class="member-info" onclick="${onToggle}"><div class="member-name">코칭 기록 입력</div><div class="member-sub">식단 · 개인운동 · 생활습관을 기록할 수 있습니다.</div></div><button class="expand-btn" onclick="${onToggle}">${isOpen?'▲':'▼'}</button></div><div class="member-detail ${isOpen?'open':''}">${isOpen?body:''}</div></div>`;
-  }
+  const r=remaining(m), p=percentUsed(m).toFixed(1); const isFinance=mode==='finance'||mode==='money'; const isCoaching=mode==='coaching'; const isOpen=isFinance||mode==='profile'?expandedId===m.id:expandedIdCoaching===m.id; const body=isFinance?buildMoneyDetailHTML(m):(isCoaching?buildCoachingDetailHTML(m):buildInfoTab(m)); const onToggle=isFinance||mode==='profile'?`toggleExpand('${m.id}')`:`toggleCoachingExpand('${m.id}')`; const pending=pendingAttendId===m.id;
+  if(currentUserRole==='member' && isCoaching){return `<div class="member"><div class="member-main"><div class="member-info" onclick="${onToggle}"><div class="member-name">${esc(m.name)}</div><div class="member-sub">내 코칭 기록 입력 · 식단 · 개인운동 · 생활습관</div></div><button class="expand-btn" onclick="${onToggle}">${isOpen?'▲':'▼'}</button></div><div class="member-detail ${isOpen?'open':''}">${isOpen?body:''}</div></div>`;}
   return `<div class="member"><div class="member-main"><button class="check-btn ${r<=0?'done':''}" ${r<=0?'disabled':''} onclick="askAttend('${m.id}')">✓</button>${pending?`<div class="member-info"><div class="member-name">${esc(m.name)} 출석 처리할까요?</div><div class="action-row" style="margin-top:8px"><button class="pill-btn mint" onclick="attend('${m.id}')">확인</button><button class="pill-btn" onclick="cancelAttend()">취소</button></div></div>`:`<div class="member-info" onclick="${onToggle}"><div class="member-name">${esc(m.name)}</div><div class="member-sub"><span class="status-pill ${statusClass(m.status)}">${esc(m.status)}</span>${esc(m.goal||'목표 미입력')} · 남은 <b>${r}</b>회 · 이번 달 <b>${m.monthlyUsed}</b>회 · ${p}%</div><div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div></div>`}<button class="expand-btn" onclick="${onToggle}">${isOpen?'▲':'▼'}</button></div><div class="member-detail ${isOpen?'open':''}">${isOpen?body:''}</div></div>`;
 }
 function renderCoaching(){
@@ -1096,25 +855,6 @@ function renderSchedule(){
   HOURS.forEach(h=>{table+=`<tr><th class="sched-hourlabel">${h}시</th>`; dates.forEach(date=>{const slot=data[`${date}_${h}`]; const sel=selectedSlot&&selectedSlot.date===date&&selectedSlot.hour===h; let cls='sched-cell'+(sel?' sched-selected':'')+(slot?` slot-${slot.status}`:''); const name=slot?(currentUserRole==='member'?'내 예약':esc(findMember(slot.memberId)?.name||'?')):''; const click=currentUserRole==='admin'?` onclick="selectSlot('${date}',${h})"`:''; table+=`<td class="${cls}"${click}>${name?`<span class="sched-name">${name}</span>`:''}</td>`;}); table+='</tr>';}); table+='</tbody></table></div>';
   el.innerHTML=`<div class="sched-nav"><button class="pill-btn" onclick="changeWeek(-1)">이전 주</button><div class="sched-range">${fmtDateShort(dates[0])} ~ ${fmtDateShort(dates[6])}${scheduleWeekOffset===0?' · 이번 주':''}</div><button class="pill-btn" onclick="changeWeek(1)">다음 주</button></div>${scheduleWeekOffset!==0?`<button class="pill-btn" style="margin-bottom:14px" onclick="goToThisWeek()">이번 주로 이동</button>`:''}<div class="sched-legend">${Object.entries(STATUS_LABELS).map(([k,v])=>`<span><i class="dot slot-${k}"></i>${v}</span>`).join('')}</div>${table}${currentUserRole==='admin'?buildSlotPanel(weekStart):''}`;
 }
-function renderSummary(){
-  const summary=document.getElementById('summary'); if(!summary)return;
-  if(currentUserRole==='member'){
-    const m=members[0]; const meal=m?.meals?.length||0, home=m?.homework?.length||0, habit=m?.habits?.length||0; const upcoming=Object.values(schedules).flatMap(w=>Object.entries(w)).filter(([k,s])=>k.slice(0,10)>=today()).length;
-    summary.innerHTML=`<div class="chip"><span class="n">${meal}건</span><span class="l">식단</span></div><div class="chip"><span class="n">${home}건</span><span class="l">개인운동</span></div><div class="chip"><span class="n">${habit}건</span><span class="l">생활습관</span></div><div class="chip"><span class="n">${upcoming}건</span><span class="l">예정 수업</span></div>`; return;
-  }
-  const remTotal=members.reduce((s,m)=>s+remaining(m),0); const reRegs=members.filter(reRegCandidate).length; if(currentView==='finance'){const totalRevenue=members.reduce((s,m)=>s+num(m.totalAmount),0); const monthlyIncome=members.reduce((s,m)=>s+num(m.monthlyUsed)*num(m.sessionFee),0); summary.innerHTML=`<div class="chip"><span class="n">${fmt(totalRevenue)}원</span><span class="l">누적 결제</span></div><div class="chip"><span class="n">${fmt(monthlyIncome)}원</span><span class="l">이번 달 수입</span></div><div class="chip"><span class="n">${remTotal}회</span><span class="l">남은 세션</span></div><div class="chip"><span class="n">${reRegs}명</span><span class="l">재등록 대상</span></div>`;}else{const active=members.filter(m=>m.status==='진행중').length; summary.innerHTML=`<div class="chip"><span class="n">${members.length}명</span><span class="l">전체 회원</span></div><div class="chip"><span class="n">${active}명</span><span class="l">진행중</span></div>`;}
-}
-function render(){
-  const allViews=['coaching','members','stats','finance','schedule','videos'];
-  const allowed=currentUserRole==='member'?['coaching','schedule','videos']:allViews;
-  if(!allowed.includes(currentView)) currentView='coaching';
-  const menu=document.getElementById('dropdown-menu'); if(menu) menu.style.display=menuOpen?'flex':'none';
-  allViews.forEach(v=>{const item=document.getElementById('menu-'+v); if(item){item.style.display=allowed.includes(v)?'block':'none'; item.className='dropdown-item'+(currentView===v?' active':'');} const view=document.getElementById('view-'+v); if(view) view.style.display=currentView===v?'block':'none';});
-  const warn=document.getElementById('storage-warn'); if(warn) warn.style.display=storageOK?'none':'block';
-  renderSummary(); if(currentUserRole==='admin') renderMembers(); renderCoaching(); if(currentUserRole==='admin'){renderStats(); renderFinance();} renderSchedule(); renderVideos();
-  const fab=document.querySelector('.fab'); if(fab) fab.style.display=currentUserRole==='admin'?'block':'none';
-  if(confirmingResetAll && currentView==='members'){showMsg('import-msg','전체 초기화는 나의 수익 탭 하단의 확정 버튼에서 처리하세요.','error'); currentView='finance';}
-}
 
 // ===== 회원 영상 기능 =====
 const VIDEO_BUCKET = 'member-videos';
@@ -1145,45 +885,10 @@ function safeFileName(name){
   const clean=String(name||'video.mp4').normalize('NFKD').replace(/[\\/:*?"<>|#%{}^~\[\]`]/g,'-').replace(/\s+/g,'-');
   return clean.slice(0,120) || 'video.mp4';
 }
-function extractYouTubeId(input){
-  const raw=String(input||'').trim();
-  if(!raw) return null;
-  const direct=raw.match(/^[A-Za-z0-9_-]{11}$/);
-  if(direct) return raw;
-  const normalized=raw.match(/^https?:\/\//i)?raw:'https://'+raw;
-  try{
-    const url=new URL(normalized);
-    const host=url.hostname.replace(/^www\./,'').replace(/^m\./,'');
-    let id='';
-    if(host==='youtu.be'){
-      id=url.pathname.split('/').filter(Boolean)[0]||'';
-    }else if(host==='youtube.com' || host.endsWith('.youtube.com')){
-      const parts=url.pathname.split('/').filter(Boolean);
-      if(url.pathname==='/watch') id=url.searchParams.get('v')||'';
-      else if(['shorts','embed','live'].includes(parts[0])) id=parts[1]||'';
-    }
-    id=(id||'').trim();
-    return /^[A-Za-z0-9_-]{11}$/.test(id)?id:null;
-  }catch(e){
-    const match=raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?[^#\s]*v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{11})/i);
-    return match?match[1]:null;
-  }
-}
-function isYouTubeLink(input){
-  return !!extractYouTubeId(input);
-}
-function canonicalYouTubeUrl(input){
-  const id=extractYouTubeId(input);
-  return id?`https://www.youtube.com/watch?v=${id}`:'';
-}
-function youtubeEmbedUrl(input){
-  const id=extractYouTubeId(input);
-  return id?`https://www.youtube.com/embed/${id}`:'';
-}
 function videoUploadForm(){
   if(currentUserRole!=='admin') return '';
   const options=members.map(m=>`<option value="${m.id}">${esc(m.name)} · ${esc(m.status||'')}</option>`).join('');
-  return `<div class="form-card"><h2>회원 영상 링크 등록</h2><div class="required-note">대용량 영상 파일은 Supabase Storage에 직접 올리지 않고, 유튜브 일부공개 링크를 등록합니다. 지원 형식: youtu.be/..., youtube.com/watch?v=..., youtube.com/shorts/...</div><div class="grid2"><div class="field required"><label>회원 <span class="req">필수</span></label><select id="video-member-id"><option value="">회원 선택</option>${options}</select></div><div class="field required"><label>유튜브 주소 <span class="req">필수</span></label><input id="video-url" type="text" inputmode="url" placeholder="https://youtu.be/영상ID 또는 https://www.youtube.com/watch?v=영상ID"></div></div><div class="field required"><label>영상 제목 <span class="req">필수</span></label><input id="video-title" type="text" placeholder="예: 스쿼트 자세 체크"></div><div class="field"><label>간단한 설명</label><textarea id="video-description" placeholder="영상에서 확인할 동작, 운동 목적, 반복 방법 등을 적습니다."></textarea></div><div class="field"><label>주의사항</label><textarea id="video-precautions" placeholder="통증 발생 시 중단, 무릎 방향, 호흡, 허리 중립 등"></textarea></div><button class="btn-primary" onclick="uploadMemberVideo()">영상 링크 등록</button><div class="msg" id="video-msg"></div></div>`;
+  return `<div class="form-card"><h2>회원 영상 업로드</h2><div class="required-note">영상 파일은 비공개 Storage 버킷에 저장됩니다. 회원은 자기 계정으로 로그인했을 때 자기 영상만 볼 수 있습니다.</div><div class="grid2"><div class="field required"><label>회원 <span class="req">필수</span></label><select id="video-member-id"><option value="">회원 선택</option>${options}</select></div><div class="field required"><label>영상 파일 <span class="req">필수</span></label><input class="file-input" id="video-file" type="file" accept="video/*"></div></div><div class="field required"><label>영상 제목 <span class="req">필수</span></label><input id="video-title" type="text" placeholder="예: 스쿼트 자세 체크"></div><div class="field"><label>간단한 설명</label><textarea id="video-description" placeholder="영상에서 확인할 동작, 운동 목적, 반복 방법 등을 적습니다."></textarea></div><div class="field"><label>주의사항</label><textarea id="video-precautions" placeholder="통증 발생 시 중단, 무릎 방향, 호흡, 허리 중립 등"></textarea></div><button class="btn-primary" onclick="uploadMemberVideo()">영상 업로드</button><div class="upload-progress" id="video-upload-progress"><span></span></div><div class="msg" id="video-msg"></div></div>`;
 }
 function showVideoMsg(text,type='info'){
   const el=document.getElementById('video-msg');
@@ -1193,110 +898,79 @@ function showVideoMsg(text,type='info'){
 }
 async function uploadMemberVideo(){
   if(currentUserRole!=='admin') return;
-  if(!cloudReady() || !sb){showVideoMsg('영상 링크 등록은 Supabase 설정 후 사용할 수 있습니다.','error'); return;}
+  if(!cloudReady() || !sb){showVideoMsg('영상 업로드는 Supabase 설정 후 사용할 수 있습니다.','error'); return;}
   const memberId=document.getElementById('video-member-id')?.value;
-  const rawUrl=document.getElementById('video-url')?.value.trim()||'';
+  const file=document.getElementById('video-file')?.files?.[0];
   const title=document.getElementById('video-title')?.value.trim();
   const description=document.getElementById('video-description')?.value.trim()||'';
   const precautions=document.getElementById('video-precautions')?.value.trim()||'';
-  const youtubeId=extractYouTubeId(rawUrl);
-  const storagePath=canonicalYouTubeUrl(rawUrl);
-  if(!memberId || !rawUrl || !title){showVideoMsg('회원, 유튜브 주소, 영상 제목은 필수입니다.','error'); return;}
-  if(!youtubeId || !storagePath){showVideoMsg('유튜브 주소 형식이 올바르지 않습니다. youtu.be, youtube.com/watch?v=, youtube.com/shorts/ 주소를 입력해 주세요.','error'); return;}
+  if(!memberId || !file || !title){showVideoMsg('회원, 영상 파일, 영상 제목은 필수입니다.','error'); return;}
+  if(!file.type.startsWith('video/')){showVideoMsg('영상 파일만 업로드할 수 있습니다.','error'); return;}
   const id=makeId();
+  const path=`${memberId}/${id}-${safeFileName(file.name)}`;
+  const progress=document.getElementById('video-upload-progress');
+  if(progress){progress.style.display='block'; progress.querySelector('span').style.width='25%';}
+  showVideoMsg('영상 업로드 중입니다. 브라우저를 닫지 마세요.','info');
+  const {error:uploadError}=await sb.storage.from(VIDEO_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
+  if(uploadError){if(progress)progress.style.display='none'; showVideoMsg('영상 업로드 실패: '+uploadError.message,'error'); return;}
+  if(progress) progress.querySelector('span').style.width='75%';
   const {error:insertError}=await sb.from('member_videos').insert({
-    id,
-    member_id:memberId,
-    title,
-    description,
-    precautions,
-    storage_path:storagePath,
-    file_name:'YouTube 일부공개 링크',
-    mime_type:'text/youtube-url',
-    file_size:0,
-    uploaded_by:currentUser?.id
+    id, member_id:memberId, title, description, precautions, storage_path:path,
+    file_name:file.name, mime_type:file.type, file_size:file.size, uploaded_by:currentUser?.id
   });
   if(insertError){
-    showVideoMsg('영상 링크 저장 실패: '+insertError.message,'error');
+    await sb.storage.from(VIDEO_BUCKET).remove([path]);
+    if(progress)progress.style.display='none';
+    showVideoMsg('영상 정보 저장 실패: '+insertError.message,'error');
     return;
   }
-  showToast('영상 링크가 등록되었습니다.','info');
-  ['video-url','video-title','video-description','video-precautions'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  if(progress) progress.querySelector('span').style.width='100%';
+  showVideoMsg('영상 업로드가 완료되었습니다.','info');
+  ['video-file','video-title','video-description','video-precautions'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   await loadCloudState();
 }
 async function playMemberVideo(videoId){
   const v=(memberVideos||[]).find(x=>x.id===videoId);
   const target=document.getElementById(`video-player-${videoId}`);
-  if(!v || !target) return;
-  const embedUrl=youtubeEmbedUrl(v.storagePath);
-  if(embedUrl){
-    target.innerHTML=`<iframe class="youtube-frame" src="${embedUrl}" title="${esc(v.title||'YouTube video player')}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe><div class="hint">유튜브 일부공개 링크를 홈페이지 내부 플레이어로 재생합니다.</div>`;
-    return;
-  }
-  if(!sb){
-    target.innerHTML='<div class="msg show error">기존 직접 업로드 영상은 Supabase Storage 연결 상태에서만 재생할 수 있습니다.</div>';
-    return;
-  }
+  if(!v || !target || !sb) return;
   target.innerHTML='<div class="hint">재생 주소를 생성하는 중입니다.</div>';
   const {data,error}=await sb.storage.from(VIDEO_BUCKET).createSignedUrl(v.storagePath,60*60);
   if(error || !data?.signedUrl){target.innerHTML='<div class="msg show error">영상을 불러오지 못했습니다. Storage 정책과 파일 경로를 확인하세요.</div>'; return;}
-  target.innerHTML=`<video class="video-player" controls playsinline preload="metadata" src="${data.signedUrl}"></video><div class="hint">기존 직접 업로드 파일 재생 모드입니다. 재생 링크는 1시간 동안만 유효합니다.</div>`;
+  target.innerHTML=`<video class="video-player" controls playsinline preload="metadata" src="${data.signedUrl}"></video><div class="hint">재생 링크는 1시간 동안만 유효합니다. 만료되면 다시 재생 버튼을 누르면 됩니다.</div>`;
 }
 async function deleteMemberVideo(videoId){
   if(currentUserRole!=='admin') return;
   const v=(memberVideos||[]).find(x=>x.id===videoId);
   if(!v || !confirm('이 영상을 삭제할까요?')) return;
   if(!cloudReady() || !sb){return;}
-  if(!isYouTubeLink(v.storagePath)){
-    const {error:removeError}=await sb.storage.from(VIDEO_BUCKET).remove([v.storagePath]);
-    if(removeError){alert('파일 삭제 실패: '+removeError.message); return;}
-  }
+  const {error:removeError}=await sb.storage.from(VIDEO_BUCKET).remove([v.storagePath]);
+  if(removeError){alert('파일 삭제 실패: '+removeError.message); return;}
   const {error:dbError}=await sb.from('member_videos').delete().eq('id',videoId);
   if(dbError){alert('영상 정보 삭제 실패: '+dbError.message); return;}
   await loadCloudState();
 }
 function renderVideoCard(v){
   const m=findMember(v.memberId);
-  const isYoutube=isYouTubeLink(v.storagePath);
-  const metaTail=isYoutube?`<span class="video-link-badge">YouTube</span>일부공개 링크`:`${esc(v.fileName||'-')} · ${fmtFileSize(v.fileSize)}`;
-  return `<div class="video-card"><div class="video-title">${esc(v.title)}</div><div class="video-meta">${currentUserRole==='admin'?`${esc(m?.name||'삭제된 회원')} · `:''}${fmtDate((v.createdAt||'').slice(0,10))} · ${metaTail}</div>${v.description?`<div class="record-text"><span class="mini-label">설명</span>${esc(v.description)}</div>`:''}${v.precautions?`<div class="record-text" style="margin-top:8px"><span class="mini-label">주의사항</span>${esc(v.precautions)}</div>`:''}<div class="action-row" style="margin-top:10px"><button class="pill-btn mint" onclick="playMemberVideo('${v.id}')">영상 재생</button>${currentUserRole==='admin'?`<button class="pill-btn danger" onclick="deleteMemberVideo('${v.id}')">삭제</button>`:''}</div><div id="video-player-${v.id}"></div></div>`;
+  return `<div class="video-card"><div class="video-title">${esc(v.title)}</div><div class="video-meta">${currentUserRole==='admin'?`${esc(m?.name||'삭제된 회원')} · `:''}${fmtDate((v.createdAt||'').slice(0,10))} · ${esc(v.fileName||'-')} · ${fmtFileSize(v.fileSize)}</div>${v.description?`<div class="record-text"><span class="mini-label">설명</span>${esc(v.description)}</div>`:''}${v.precautions?`<div class="record-text" style="margin-top:8px"><span class="mini-label">주의사항</span>${esc(v.precautions)}</div>`:''}<div class="action-row" style="margin-top:10px"><button class="pill-btn mint" onclick="playMemberVideo('${v.id}')">영상 재생</button>${currentUserRole==='admin'?`<button class="pill-btn danger" onclick="deleteMemberVideo('${v.id}')">삭제</button>`:''}</div><div id="video-player-${v.id}"></div></div>`;
 }
 function renderVideos(){
   const el=document.getElementById('video-content');
   if(!el) return;
   if(!cloudReady()){
-    el.innerHTML='<div class="empty">영상 링크 기능은 Supabase 설정 후 사용할 수 있습니다.</div>';
+    el.innerHTML='<div class="empty">영상 기능은 Supabase Storage 설정 후 사용할 수 있습니다.</div>';
     return;
   }
   if(currentUserRole==='admin'){
     const filterOptions=['<option value="all">전체 회원</option>'].concat(members.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`)).join('');
     const selected=document.getElementById('video-filter-member')?.value||'all';
     const list=(memberVideos||[]).filter(v=>selected==='all'||v.memberId===selected).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-    el.innerHTML=`${videoUploadForm()}<div class="toolbar"><select id="video-filter-member" onchange="renderVideos()">${filterOptions}</select></div><div class="video-grid">${list.length?list.map(renderVideoCard).join(''):'<div class="empty-sub">등록된 영상 링크가 없습니다.</div>'}</div>`;
+    el.innerHTML=`${videoUploadForm()}<div class="toolbar"><select id="video-filter-member" onchange="renderVideos()">${filterOptions}</select></div><div class="video-grid">${list.length?list.map(renderVideoCard).join(''):'<div class="empty-sub">업로드된 영상이 없습니다.</div>'}</div>`;
     const filter=document.getElementById('video-filter-member'); if(filter) filter.value=selected;
     return;
   }
   const m=members[0];
   const list=m?videoRowsForMember(m.id):[];
-  el.innerHTML=`<div class="stat-block"><h3>내 운동 영상</h3><div class="record-text">트레이너가 등록한 유튜브 일부공개 운동 영상과 설명, 주의사항을 확인할 수 있습니다.</div></div><div class="video-grid">${list.length?list.map(renderVideoCard).join(''):'<div class="empty-sub">아직 등록된 영상이 없습니다.</div>'}</div>`;
-}
-async function loadOwnMemberSummary(client, profile){
-  const fallback={id:profile.member_id, name:profile.display_name||profile.login_id||'회원', phone:'', status:'진행중', goal:'', totalAmount:0,totalSessions:0,usedSessions:0,monthlyUsed:0,sessionFee:0, inbody:[],workouts:[],meals:[],homework:[],habits:[]};
-  if(!profile?.member_id) return fallback;
-  try{
-    const {data,error}=await client.rpc('get_my_session_summary');
-    const row=Array.isArray(data)?data[0]:data;
-    if(!error && row){
-      return {...fallback, id:row.id||fallback.id, name:row.name||fallback.name, status:row.status||fallback.status, goal:row.goal||'', totalSessions:row.total_sessions||0, usedSessions:row.used_sessions||0, monthlyUsed:row.monthly_used||0, sessionFee:row.session_fee||0};
-    }
-  }catch(e){}
-  try{
-    const {data:row}=await client.from('members').select('id,name,status,goal,total_sessions,used_sessions,monthly_used,session_fee').eq('id',profile.member_id).maybeSingle();
-    if(row){
-      return {...fallback, id:row.id||fallback.id, name:row.name||fallback.name, status:row.status||fallback.status, goal:row.goal||'', totalSessions:row.total_sessions||0, usedSessions:row.used_sessions||0, monthlyUsed:row.monthly_used||0, sessionFee:row.session_fee||0};
-    }
-  }catch(e){}
-  return fallback;
+  el.innerHTML=`<div class="stat-block"><h3>내 운동 영상</h3><div class="record-text">트레이너가 업로드한 운동 영상과 설명, 주의사항을 확인할 수 있습니다.</div></div><div class="video-grid">${list.length?list.map(renderVideoCard).join(''):'<div class="empty-sub">아직 업로드된 영상이 없습니다.</div>'}</div>`;
 }
 async function loadCloudState(){
   const client=initSupabaseClient();
@@ -1307,6 +981,7 @@ async function loadCloudState(){
   const {data:profile,error:profileErr}=await client.from('profiles').select('*').eq('user_id',session.user.id).single();
   if(profileErr || !profile){ setAppVisible(false); showAuthMsg('프로필 권한 정보가 없습니다. Supabase profiles 테이블에서 관리자/회원 역할을 확인하세요.','error'); return; }
   currentUserProfile=profile; currentUserRole=profile.role;
+  if(profile.must_change_password && !pwCheckSkipped){ showPasswordChangeView(); return; }
   if(currentUserRole==='admin'){
     const [{data:memberRows,error:memErr},{data:recordRows,error:recErr},{data:scheduleRows,error:schErr},{data:videoRows,error:vidErr}] = await Promise.all([
       client.from('members').select('*').order('name'),
@@ -1314,19 +989,19 @@ async function loadCloudState(){
       client.from('schedule_slots').select('*').order('slot_date',{ascending:true}),
       client.from('member_videos').select('*').order('created_at',{ascending:false})
     ]);
-    if(memErr||recErr||schErr||vidErr){showAuthMsg('데이터를 불러오지 못했습니다. RLS 정책과 member_videos 테이블을 확인하세요.','error'); return;}
+    if(memErr||recErr||schErr||vidErr){showAuthMsg('데이터를 불러오지 못했습니다. RLS 정책, Storage 버킷, member_videos 테이블 생성을 확인하세요.','error'); return;}
     members=(memberRows||[]).map(row=>dbRowToMember(row,recordRows||[]));
     schedules=scheduleRowsToMap(scheduleRows||[]);
     memberVideos=(videoRows||[]).map(normalizeVideoRow);
   }else{
-    const [{data:recordRows,error:recErr},{data:scheduleRows,error:schErr},{data:videoRows,error:vidErr},ownSummary] = await Promise.all([
+    const [{data:recordRows,error:recErr},{data:scheduleRows,error:schErr},{data:videoRows,error:vidErr}] = await Promise.all([
       client.from('member_records').select('*').order('created_at',{ascending:true}),
       client.from('schedule_slots').select('*').order('slot_date',{ascending:true}),
-      client.from('member_videos').select('*').order('created_at',{ascending:false}),
-      loadOwnMemberSummary(client, profile)
+      client.from('member_videos').select('*').order('created_at',{ascending:false})
     ]);
     if(recErr||schErr||vidErr){showAuthMsg('내 기록을 불러오지 못했습니다. 권한 정책과 영상 테이블을 확인하세요.','error'); return;}
-    members=[dbRowToMember({...ownSummary, created_at_date:today()}, recordRows||[])];
+    const own={id:profile.member_id, name:profile.display_name||profile.login_id||'회원', phone:'', status:'진행중', goal:'', totalAmount:0,totalSessions:0,usedSessions:0,monthlyUsed:0,sessionFee:0, inbody:[],workouts:[],meals:[],homework:[],habits:[]};
+    members=[dbRowToMember({...own, created_at_date:today()}, recordRows||[])];
     schedules=scheduleRowsToMap(scheduleRows||[]);
     memberVideos=(videoRows||[]).map(normalizeVideoRow);
     expandedIdCoaching=profile.member_id;
